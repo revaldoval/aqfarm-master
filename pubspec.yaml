@@ -1,0 +1,50 @@
+name: kolamleleiot
+description: "A new Flutter project."
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.2.6 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  animated_text_kit: ^4.2.1 # Memisahkan ini dari flutter
+  cupertino_icons: ^1.0.2
+  intl: ^0.17.0
+  fl_chart: ^0.50.1
+  youtube_player_flutter: ^8.0.0
+  firebase_core: ^3.6.0 
+  firebase_database: ^11.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/Logo-splash.png
+    - assets/Logo-splash-screen.png
+    - assets/ic-home.png
+    - assets/ic-monitoring.png
+    - assets/ic-notification.png
+    - assets/ic-profil.png
+    - assets/notifikasi icon.png
+    - assets/gelombang.png
+    - assets/waterdrop.png
+    - assets/ic-pagi.png
+    - assets/ic-sore.png
+    - assets/ic-malam.png
+    - assets/ic-pakan.png
+    - assets/ic-pengurasan.png
+    - assets/ic-pengisian.png
+    - assets/ic-monitor1.png
+    - assets/ic-monitor2.png
+    - assets/ic-monitor3.png
+    - assets/defaut-profil.png
+    - assets/suhu air.png
+    - assets/logo aquafarm.png
+    - assets/setnama.png

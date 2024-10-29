@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "470841927048",
+    "firebase_url": "https://aq-farm-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "aq-farm",
+    "storage_bucket": "aq-farm.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:470841927048:android:b719454105e72be55f863d",
+        "android_client_info": {
+          "package_name": "aqfarm.nox"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqVdfyCFx7LT-BT0lrsZ-b7J-BmKSeaRk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:470841927048:android:f39fc96507ce9a185f863d",
+        "android_client_info": {
+          "package_name": "com.example.kolamleleiot"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqVdfyCFx7LT-BT0lrsZ-b7J-BmKSeaRk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
