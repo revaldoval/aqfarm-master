@@ -9,7 +9,28 @@ class InformasiScreen extends StatefulWidget {
 
 class _InformasiScreenState extends State<InformasiScreen> {
   String? selectedBibit;
-  final List<String> jumlahBibit = ["10", "20", "30", "40", "50", "100", "150", "200", "250", "50",];
+  final List<String> jumlahBibit = [
+    "50",
+    "100",
+    "150",
+    "200",
+    "250",
+    "300",
+    "350",
+    "400",
+    "450",
+    "500",
+    "550",
+    "600",
+    "650",
+    "700",
+    "750",
+    "800",
+    "850",
+    "900",
+    "950",
+    "1000"
+  ];
 
   // Reference to the Realtime Database
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
@@ -17,10 +38,11 @@ class _InformasiScreenState extends State<InformasiScreen> {
   // Function to update value in Firebase Realtime Database
   Future<void> updateFishQuantity() async {
     if (selectedBibit != null) {
-      print("Updating quantity: $selectedBibit"); // Debugging output
       try {
-        await _database.child('ikan').set(selectedBibit);
-        print("Data sent successfully"); // Confirmation output
+        int selectedQuantity = int.parse(selectedBibit!); // Convert to integer
+        await _database.child('ikan').set(selectedQuantity); // Send as integer
+        print(
+            "Data sent successfully: $selectedQuantity"); // Confirmation output
       } catch (e) {
         print("Error sending data: $e"); // Error output
       }
