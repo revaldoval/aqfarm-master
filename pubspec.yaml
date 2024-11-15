@@ -15,8 +15,10 @@ dependencies:
   intl: ^0.17.0
   fl_chart: ^0.50.1
   youtube_player_flutter: ^8.0.0
-  firebase_core: ^3.6.0 
-  firebase_database: ^11.1.4
+  firebase_core: ^2.5.0
+  firebase_database: ^10.0.7
+  firebase_messaging: ^14.7.10
+  firebase_analytics: ^10.10.7
 
 dev_dependencies:
   flutter_test:
@@ -48,3 +50,4 @@ flutter:
     - assets/suhu air.png
     - assets/logo aquafarm.png
     - assets/setnama.png
+    - assets/lele.png

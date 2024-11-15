@@ -13,13 +13,6 @@ class NotifikasiScreen extends StatelessWidget {
       'pengurasan',
       'pengisian',
       'pakan',
-      'pengurasan',
-      'pakan',
-      'pengurasan',
-      'pengisian',
-      'pakan',
-      'pengurasan',
-      'pakan'
     ];
 
     return Scaffold(

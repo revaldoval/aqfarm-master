@@ -1,6 +1,12 @@
+import 'dart:async'; // Import Timer untuk pembaruan otomatis
+
 import 'package:flutter/material.dart';
 import 'package:kolamleleiot/componen/collors.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/services.dart';
+import 'package:kolamleleiot/custom/AlertDialog.dart';
+import 'package:kolamleleiot/custom/ikan_lele.dart';
+import 'package:kolamleleiot/custom/popup.dart';
 
 class InformasiScreen extends StatefulWidget {
   @override
@@ -8,49 +14,147 @@ class InformasiScreen extends StatefulWidget {
 }
 
 class _InformasiScreenState extends State<InformasiScreen> {
-  String? selectedBibit;
-  final List<String> jumlahBibit = [
-    "50",
-    "100",
-    "150",
-    "200",
-    "250",
-    "300",
-    "350",
-    "400",
-    "450",
-    "500",
-    "550",
-    "600",
-    "650",
-    "700",
-    "750",
-    "800",
-    "850",
-    "900",
-    "950",
-    "1000"
-  ];
-
-  // Reference to the Realtime Database
+  final TextEditingController _fishQuantityController = TextEditingController();
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  Timer? _timer;
+  int _fishAge = 0;
+  int? _fishQuantity;
 
-  // Function to update value in Firebase Realtime Database
+  @override
+  void initState() {
+    super.initState();
+    _startAgeTimer();
+    _getFishAgeFromDatabase();
+    fetchFishQuantity();
+  }
+
+  void _startAgeTimer() {
+    _timer = Timer.periodic(Duration(days: 1), (_) {
+      setState(() {
+        _fishAge++;
+      });
+    });
+  }
+
+  Future<void> _getFishAgeFromDatabase() async {
+    final snapshot = await _database.child('informasiLele/tanggalMulai').get();
+    if (snapshot.exists) {
+      DateTime startDate = DateTime.parse(snapshot.value as String);
+      _fishAge = DateTime.now().difference(startDate).inDays;
+      setState(() {});
+    }
+  }
+
   Future<void> updateFishQuantity() async {
-    if (selectedBibit != null) {
+    if (_fishQuantityController.text.isNotEmpty &&
+        int.parse(_fishQuantityController.text) < 101) {
       try {
-        int selectedQuantity = int.parse(selectedBibit!); // Convert to integer
-        await _database.child('ikan').set(selectedQuantity); // Send as integer
-        print(
-            "Data sent successfully: $selectedQuantity"); // Confirmation output
+        int selectedQuantity = int.parse(_fishQuantityController.text);
+        await _database.child('data/jumlahIkan').set(selectedQuantity);
+
+        // Save the current date for age calculation
+        await _database
+            .child('informasiLele/tanggalMulai')
+            .set(DateTime.now().toIso8601String());
+
+        // Set the initial feeding amounts
+        Map<String, int> feedingAmounts = {
+          'makanPagi/beratMakan': getFeedingAmount(selectedQuantity),
+          'makanSore/beratMakan': getFeedingAmount(selectedQuantity),
+          'makanMalam/beratMakan': getFeedingAmount(selectedQuantity),
+        };
+
+        await _database
+            .child('makanPagi/beratMakan')
+            .set(feedingAmounts['makanPagi/beratMakan']);
+        await _database
+            .child('makanSore/beratMakan')
+            .set(feedingAmounts['makanSore/beratMakan']);
+        await _database
+            .child('makanMalam/beratMakan')
+            .set(feedingAmounts['makanMalam/beratMakan']);
+
+        // Clear the text field after successful operation
+        _fishQuantityController.clear();
+
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return StatusPopup(
+              message:
+                  "Selamat anda telah berhasil mengatur jumlah bibit lele!",
+              isSuccess: true,
+            );
+          },
+        );
       } catch (e) {
-        print("Error sending data: $e"); // Error output
+        print("Error sending data: $e");
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please select a fish quantity before saving.")),
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return StatusPopup(
+            message: "Gagal mengatur jumlah bibit lele!",
+            isSuccess: false,
+          );
+        },
       );
     }
+  }
+
+  Future<int?> getFishQuantity() async {
+    try {
+      // Mendapatkan data dari Firebase menggunakan ref() dan child() yang benar
+      final snapshot = await _database.child('data/jumlahIkan').get();
+
+      // Memeriksa apakah data ada dan mengembalikan nilai sebagai integer
+      if (snapshot.exists) {
+        return snapshot.value is int
+            ? snapshot.value as int
+            : int.tryParse(snapshot.value.toString());
+      } else {
+        return null; // Data tidak ada
+      }
+    } catch (e) {
+      print("Error fetching fish quantity: $e");
+      return null;
+    }
+  }
+
+  Future<void> fetchFishQuantity() async {
+    try {
+      // Mendapatkan reference ke 'data/jumlahIkan' di Firebase
+      final ref = FirebaseDatabase.instance.ref().child('data/jumlahIkan');
+
+      // Menambahkan listener untuk mendeteksi perubahan data secara otomatis
+      ref.onValue.listen((event) {
+        // Mengambil data terbaru dari snapshot
+        int? quantity = event.snapshot.value is int
+            ? event.snapshot.value as int
+            : int.tryParse(event.snapshot.value.toString());
+
+        // Update state dengan jumlah ikan terbaru
+        setState(() {
+          _fishQuantity = quantity ?? 0;
+        });
+
+        // Menampilkan jumlah ikan yang diterima
+        print("Jumlah ikan terbaru: $_fishQuantity");
+      });
+    } catch (e) {
+      print("Error fetching fish quantity: $e");
+    }
+  }
+
+  int getFeedingAmount(int quantity) {
+    return (quantity * 0.5).toInt();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -66,29 +170,25 @@ class _InformasiScreenState extends State<InformasiScreen> {
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
-          // Align content at the top
           mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center, // Center horizontally
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Card(
-              margin: EdgeInsets.symmetric(
-                  horizontal: 10.0), // Jarak 30 dari kiri dan kanan layar
+              margin: EdgeInsets.symmetric(horizontal: 10.0),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0), // Radius sudut
+                borderRadius: BorderRadius.circular(15.0),
               ),
-              color: ColorConstants.primaryColor, // Warna Card
+              color: ColorConstants.primaryColor,
               child: Padding(
                 padding: EdgeInsets.all(20.0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment
-                      .spaceBetween, // Menyebar konten secara horizontal
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment
-                          .start, // Mengatur posisi teks ke kiri
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "35 Hari",
+                          "$_fishAge Hari", // Display dynamic minutes
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 24.0,
@@ -102,7 +202,6 @@ class _InformasiScreenState extends State<InformasiScreen> {
                             fontSize: 16.0,
                           ),
                         ),
-                        // SizedBox(height: 10),
                         Text(
                           "100% Target tercapai",
                           style: TextStyle(
@@ -112,7 +211,6 @@ class _InformasiScreenState extends State<InformasiScreen> {
                         ),
                       ],
                     ),
-                    // Child: CircularProgressIndicator berada di kanan
                     Stack(
                       alignment: Alignment.center,
                       children: [
@@ -120,7 +218,7 @@ class _InformasiScreenState extends State<InformasiScreen> {
                           width: 100,
                           height: 100,
                           child: CircularProgressIndicator(
-                            value: 0.4, // 40%
+                            value: 0.4,
                             strokeWidth: 10,
                             backgroundColor: Colors.white.withOpacity(0.2),
                             valueColor:
@@ -141,19 +239,66 @@ class _InformasiScreenState extends State<InformasiScreen> {
                 ),
               ),
             ),
-
+            SizedBox(height: 10),
+            Card(
+              margin: EdgeInsets.symmetric(horizontal: 10.0),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              color: Colors.grey,
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _fishQuantity == null
+                            ? Text(
+                                'Loading...', // Teks saat data sedang dimuat
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : Text(
+                                '$_fishQuantity Bibit Lele', // Display dynamic quantity
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                        Text(
+                          "Jumlah Bibit Lele",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Image.asset(
+                      'assets/lele.png', // Ganti dengan path gambar Anda
+                      width: 100, // Sesuaikan ukuran gambar
+                      height: 100, // Sesuaikan ukuran gambar
+                    ),
+                  ],
+                ),
+              ),
+            ),
             SizedBox(height: 30),
-            // Instructional Text
             Text(
               "Silakan masukkan jumlah bibit ikan yang akan dimasukkan ke dalam kolam untuk memudahkan dalam pemberian pakan.",
               style: TextStyle(
                 fontSize: 14.0,
                 color: ColorConstants.greyColor,
               ),
-              textAlign: TextAlign.center, // Correct placement of textAlign
+              textAlign: TextAlign.center,
             ),
             SizedBox(height: 50),
-            // Dropdown for selecting jumlah bibit ikan
             Container(
               margin: EdgeInsets.symmetric(horizontal: 10.0),
               padding: EdgeInsets.symmetric(horizontal: 15.0),
@@ -161,31 +306,31 @@ class _InformasiScreenState extends State<InformasiScreen> {
                 border: Border.all(color: Colors.black54),
                 borderRadius: BorderRadius.circular(8.0),
               ),
-              child: DropdownButton<String>(
-                value: selectedBibit,
-                hint: Text("Jumlah bibit ikan"),
-                isExpanded: true,
-                underline: SizedBox(),
-                items: jumlahBibit.map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-                onChanged: (newValue) {
-                  setState(() {
-                    selectedBibit = newValue;
-                  });
-                },
+              child: TextField(
+                controller: _fishQuantityController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                decoration: InputDecoration(
+                  hintText: "Jumlah bibit ikan",
+                  border: InputBorder.none,
+                ),
               ),
             ),
-            SizedBox(height: 50),
-            // Setting button
+            SizedBox(height: 20),
             ElevatedButton(
-              onPressed: updateFishQuantity, // Call function directly
+              onPressed: () async {
+                bool? result = await CancellationDialog.show(context);
+                if (result == true) {
+                  updateFishQuantity();
+                  print("User confirmed cancellation");
+                } else {
+                  print("User canceled the dialog");
+                }
+              },
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    Colors.blue, // Adjust your color here if needed
+                backgroundColor: Colors.blue,
                 padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
               ),
               child: Text(

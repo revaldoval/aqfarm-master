@@ -20,7 +20,7 @@ class _AmoniaChartState extends State<AmoniaChart> {
   }
 
   void _getAmoniakChart() {
-    _database.child('amoniak').onValue.listen((DatabaseEvent event) {
+    _database.child('data/amoniak').onValue.listen((DatabaseEvent event) {
       final String newAmoniakChart = event.snapshot.value.toString();
       double amoniaValueChart = double.tryParse(newAmoniakChart) ?? 0.0;
 
@@ -31,7 +31,7 @@ class _AmoniaChartState extends State<AmoniaChart> {
   }
 
   void _getAmoniak() {
-    _database.child('amoniak').onValue.listen((DatabaseEvent event) {
+    _database.child('data/amoniak').onValue.listen((DatabaseEvent event) {
       final String newAmoniak = event.snapshot.value.toString();
       double amoniaValue = double.tryParse(newAmoniak) ?? 0.0;
 

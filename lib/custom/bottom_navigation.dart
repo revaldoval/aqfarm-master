@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kolamleleiot/view/beranda.dart';
 import 'package:kolamleleiot/view/informasi.dart';
 import 'package:kolamleleiot/view/monitoring.dart';
-import 'package:kolamleleiot/view/profil.dart';
+import 'package:kolamleleiot/tidak%20terpakai/profil.dart';
 
 class BottomNavigation extends StatefulWidget {
   @override
@@ -14,24 +14,24 @@ class _BottomNavigationState extends State<BottomNavigation> {
 
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex =
-          index; // Mengubah tampilan berdasarkan indeks yang dipilih
+      _selectedIndex = index;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> _pages = [
-      HomeScreen(
-          // onTapNotification: _onItemTapped, // Panggil _onItemTapped langsung
-          ),
-      MonitoringScreen(),
+      HomeScreen(),
+      // MonitoringScreen(),
       InformasiScreen(),
       ProfilScreen(),
     ];
 
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -46,46 +46,27 @@ class _BottomNavigationState extends State<BottomNavigation> {
         child: BottomNavigationBar(
           items: <BottomNavigationBarItem>[
             BottomNavigationBarItem(
-              icon: Image.asset(
-                'assets/ic-home.png',
-                width: 24,
-                height: 24,
-                color: _selectedIndex == 0 ? Colors.black : Colors.grey[600],
-              ),
+              icon: Icon(Icons.home, size: 24),
               label: 'Home',
             ),
+            // BottomNavigationBarItem(
+            //   icon: Icon(Icons.monitor, size: 24),
+            //   label: 'Monitoring',
+            // ),
             BottomNavigationBarItem(
-              icon: Image.asset(
-                'assets/ic-monitoring.png',
-                width: 24,
-                height: 24,
-                color: _selectedIndex == 1 ? Colors.black : Colors.grey[600],
-              ),
-              label: 'Monitoring',
-            ),
-            BottomNavigationBarItem(
-              icon: Image.asset(
-                'assets/ic-notification.png',
-                width: 24,
-                height: 24,
-                color: _selectedIndex == 2 ? Colors.black : Colors.grey[600],
-              ),
+              icon: Icon(Icons.info, size: 24),
               label: 'Informasi',
             ),
-            BottomNavigationBarItem(
-              icon: Image.asset(
-                'assets/ic-profil.png',
-                width: 24,
-                height: 24,
-                color: _selectedIndex == 3 ? Colors.black : Colors.grey[600],
-              ),
-              label: 'Profil',
-            ),
+            // BottomNavigationBarItem(
+            //   icon: Icon(Icons.person, size: 24),
+            //   label: 'Profil',
+            // ),
           ],
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
           selectedItemColor: Colors.black,
-          unselectedItemColor: Colors.grey[600],
+          unselectedItemColor: Colors.black,
+          showUnselectedLabels: true,
         ),
       ),
     );

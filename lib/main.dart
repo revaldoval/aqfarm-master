@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:kolamleleiot/view/set-nama.dart';
-// import 'beranda.dart';
-// import 'custom/bottom_navigation.dart';
+import 'package:kolamleleiot/view/beranda.dart';
+import 'package:kolamleleiot/tidak%20terpakai/set-nama.dart';
+import 'custom/bottom_navigation.dart';
 import 'view/splashscreen.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // Mendapatkan token FCM
+  final fcmToken = await FirebaseMessaging.instance.getToken();
+  print("FCM Token: $fcmToken");
+
   runApp(MyApp());
 }
 
@@ -21,9 +26,9 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: SplashScreen(), // Panggil SplashScreen sebagai halaman pertama
+      home: SplashScreen(),
       routes: {
-        '/home': (context) => SetNamaScreen(), // Halaman setelah splash
+        '/home': (context) => BottomNavigation(),
       },
     );
   }

@@ -4,8 +4,9 @@ import '../grafik/kadar_amonia.dart';
 import 'package:intl/intl.dart';
 import '../custom/icon_notifikasi.dart';
 import 'package:kolamleleiot/componen/collors.dart';
-import 'package:firebase_core/firebase_core.dart';
+// import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
+import '../custom/feedcardwidget.dart';
 
 class HomeScreen extends StatefulWidget {
   // final Function(int) onTapNotification;
@@ -21,13 +22,14 @@ class _HomeScreenState extends State<HomeScreen> {
   String currentAmoniaLevel = "Loading...";
   String amoniaLevelText = "Loading...";
 
-  bool _switchValuePagi = false;
-  bool _switchValueSore = false;
-  bool _switchValueMalam = false;
+  double pagiFeedWeight = 0.5; // default 0.5
+  double soreFeedWeight = 0.5; // default 0.5
+  double malamFeedWeight = 0.5; // default 0.5
 
-  double _beratPakanPagi = 1.0; // Nilai default 1kg
-  double _beratPakanSore = 1.0; // Nilai default 1kg
-  double _beratPakanMalam = 1.0; // Nilai default 1kg
+  // bool _malamSwitchValue = false;
+  // double _malamWeight = 0.0;
+  // bool _switchValueMalam = false;
+  // double _beratPakanMalam = 1.0;
 
   // Fungsi untuk mendapatkan ucapan berdasarkan waktu
   String getGreeting() {
@@ -48,10 +50,11 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _getSuhu();
     _getAmoniak();
+    _getFeedWeight();
   }
 
   void _getSuhu() {
-    _database.child('suhu').onValue.listen((event) {
+    _database.child('data/suhuAir').onValue.listen((event) {
       final String newSuhu = event.snapshot.value.toString();
       setState(() {
         suhu = newSuhu;
@@ -60,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _getAmoniak() {
-    _database.child('amoniak').onValue.listen((DatabaseEvent event) {
+    _database.child('data/amoniak').onValue.listen((DatabaseEvent event) {
       final String newAmoniak = event.snapshot.value.toString();
       setState(() {
         currentAmoniaLevel = newAmoniak;
@@ -70,15 +73,50 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _getFeedWeight() {
+    // Ambil data berat pakan berdasarkan waktu dari Firebase
+    _database
+        .child('makanPagi/beratMakan')
+        .onValue
+        .listen((DatabaseEvent event) {
+      final String makanPagi = event.snapshot.value.toString();
+      double makanPagiWeight = double.tryParse(makanPagi) ?? 0.5; // default 0.5
+
+      setState(() {
+        pagiFeedWeight = makanPagiWeight;
+      });
+    });
+
+    _database
+        .child('makanSore/beratMakan')
+        .onValue
+        .listen((DatabaseEvent event) {
+      final String makanSore = event.snapshot.value.toString();
+      double makanSoreWeight = double.tryParse(makanSore) ?? 0.5; // default 0.5
+
+      setState(() {
+        soreFeedWeight = makanSoreWeight;
+      });
+    });
+
+    _database
+        .child('makanMalam/beratMakan')
+        .onValue
+        .listen((DatabaseEvent event) {
+      final String makanMalam = event.snapshot.value.toString();
+      double makanMalamWeight =
+          double.tryParse(makanMalam) ?? 0.5; // default 0.5
+
+      setState(() {
+        malamFeedWeight = makanMalamWeight;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // Mengambil waktu saat ini
     String currentTime = DateFormat('HH:mm').format(DateTime.now());
-
-    // // Menentukan nilai kadar amonia saat ini (ganti dengan nilai yang sesuai)
-    // String currentAmoniaLevel = amoniak; // Contoh kadar amonia
-    // String amoniaLevelText =
-    //     currentAmoniaLevel.toString() + '%'; // Menghitung persen
 
     return Scaffold(
       appBar: AppBar(
@@ -93,35 +131,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: ColorConstants.blackColor,
               ),
             ),
-            Text(
-              "Johan",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: ColorConstants.blackColor,
-              ),
-            ),
+            // Text(
+            //   "Johan",
+            //   style: TextStyle(
+            //     fontSize: 20,
+            //     fontWeight: FontWeight.w600,
+            //     color: ColorConstants.blackColor,
+            //   ),
+            // ),
           ],
         ),
         // backgroundColor: ColorConstants.PutihBiruColor,
         backgroundColor: ColorConstants.BiruColor,
-        // backgroundColor: Color(0xFF62CDFA),
-        // actions: [
-        //   Padding(
-        //     padding: const EdgeInsets.only(
-        //         right: 20), // Menambahkan jarak 20 dari kanan
-        //     child: GestureDetector(
-        //       onTap: () {
-        //         widget.onTapNotification(2); // Ganti ke indeks notifikasi
-        //       },
-        //       child: CustomNotificationIcon(
-        //         hasNotification:
-        //             // false, // Ganti dengan true atau false sesuai kondisi notifikasi
-        //             true,
-        //       ),
-        //     ),
-        //   )
-        // ],
+
         actions: [
           Padding(
             padding: const EdgeInsets.only(
@@ -159,49 +181,6 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Column(
                 children: [
-                  // Header
-                  // Padding(
-                  //   padding:
-                  //       const EdgeInsets.only(left: 20, top: 44, right: 20),
-                  //   child: Row(
-                  //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  //     children: [
-                  //       Column(
-                  //         crossAxisAlignment: CrossAxisAlignment.start,
-                  //         children: [
-                  //           Text(
-                  //             getGreeting(),
-                  //             style: TextStyle(
-                  //               fontSize: 14,
-                  //               fontWeight: FontWeight.w500,
-                  //               color: Colors.white,
-                  //             ),
-                  //           ),
-                  //           Text(
-                  //             "Nama Pengguna",
-                  //             style: TextStyle(
-                  //               fontSize: 20,
-                  //               fontWeight: FontWeight.w600,
-                  //               color: Colors.black,
-                  //             ),
-                  //           ),
-                  //         ],
-                  //       ),
-                  //       GestureDetector(
-                  //         onTap: () {
-                  //           widget.onTapNotification(
-                  //               2); // Ganti ke indeks notifikasi
-                  //         },
-                  //         child: Image.asset(
-                  //           'assets/notifikasi icon.png', // Pastikan nama file benar
-                  //           fit: BoxFit.cover,
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
-                  // Kadar Amonia
-                  // SizedBox(height: 20),
                   Padding(
                     padding: const EdgeInsets.only(left: 30),
                     child: Align(
@@ -446,459 +425,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   SizedBox(height: 20),
-
-                  // pemberian pakan pagi
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: MediaQuery.of(context).size.width -
-                            60, // Lebar menyesuaikan dengan lebar layar
-                        margin: EdgeInsets.symmetric(
-                            horizontal: 30), // Margin kiri dan kanan
-                        child: Card(
-                          color: Colors.white,
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.all(15), // Padding untuk teks
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment
-                                      .center, // Menyelaraskan teks dan gambar secara vertikal
-                                  children: [
-                                    Text(
-                                      "Pagi",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                        width:
-                                            5), // Jarak kecil antara teks dan gambar
-                                    Image.asset(
-                                      'assets/ic-pagi.png', // Path menuju gambar
-                                      width: 24, // Lebar gambar
-                                      height: 24, // Tinggi gambar
-                                    ),
-                                    Spacer(), // Menggunakan Spacer agar Switch berada di paling kanan
-                                    // Teks status ON/OFF
-                                    Text(
-                                      _switchValuePagi
-                                          ? "ON"
-                                          : "OFF", // Menampilkan ON atau OFF berdasarkan status switch
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: _switchValuePagi
-                                            ? Colors.green
-                                            : Colors
-                                                .red, // Warna teks sesuai status
-                                      ),
-                                    ),
-                                    SizedBox(
-                                        width:
-                                            10), // Jarak antara teks dan switch
-                                    Switch(
-                                      value: _switchValuePagi,
-                                      onChanged: (bool value) {
-                                        setState(() {
-                                          _switchValuePagi = value;
-                                        });
-                                      },
-                                      activeColor: Colors
-                                          .green, // Warna ketika switch dalam keadaan on
-                                      inactiveThumbColor: Colors
-                                          .red, // Warna ketika switch dalam keadaan off
-                                      inactiveTrackColor: Colors
-                                          .grey[300], // Warna track ketika off
-                                    ),
-                                  ],
-                                ),
-                                Column(
-                                  children: [
-                                    Center(
-                                      // Menggunakan Center untuk menempatkan teks di tengah
-                                      child: RichText(
-                                        text: TextSpan(
-                                          style: TextStyle(
-                                            fontSize:
-                                                14, // Ukuran font default untuk seluruh teks
-                                            color: Colors
-                                                .black, // Warna default untuk seluruh teks
-                                          ),
-                                          children: [
-                                            TextSpan(
-                                              text:
-                                                  "Berat pakan yang diberikan ", // Teks berat pakan
-                                              style: TextStyle(
-                                                fontSize:
-                                                    14, // Ukuran font untuk berat pakan
-                                                color: Colors
-                                                    .black, // Warna hitam untuk berat pakan
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: "(kg)", // Teks kg
-                                              style: TextStyle(
-                                                fontSize:
-                                                    12, // Ukuran font untuk kg
-                                                color: Colors
-                                                    .grey, // Warna abu untuk kg
-                                                fontWeight: FontWeight
-                                                    .w600, // Tebal untuk kg
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                        height:
-                                            20), // Jarak antara teks dan slider
-                                    // Slider untuk memilih berat pakan
-                                    Slider(
-                                      value: _beratPakanPagi,
-                                      min: 1,
-                                      max: 5,
-                                      divisions:
-                                          4, // Membagi slider menjadi 4 step (1, 2, 3, 4, 5)
-                                      label:
-                                          "${_beratPakanPagi.toStringAsFixed(1)} kg", // Label di atas slider
-                                      onChanged: (double value) {
-                                        setState(() {
-                                          _beratPakanPagi = value;
-                                        });
-                                      },
-                                      activeColor: Colors.green,
-                                      inactiveColor: Colors.grey[300],
-                                    ),
-                                    Text(
-                                      "Berat pakan: ${_beratPakanPagi.toStringAsFixed(1)} kg",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  FeedCardWidget(
+                    feedTime: "Pagi",
+                    feedWeight: pagiFeedWeight,
+                    initialSwitchValue: false,
                   ),
                   SizedBox(height: 5),
-                  // pemberian pakan sore
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: MediaQuery.of(context).size.width -
-                            60, // Lebar menyesuaikan dengan lebar layar
-                        margin: EdgeInsets.symmetric(
-                            horizontal: 30), // Margin kiri dan kanan
-                        child: Card(
-                          color: Colors.white,
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.all(15), // Padding untuk teks
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment
-                                      .center, // Menyelaraskan teks dan gambar secara vertikal
-                                  children: [
-                                    Text(
-                                      "Sore",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                        width:
-                                            5), // Jarak kecil antara teks dan gambar
-                                    Image.asset(
-                                      'assets/ic-sore.png', // Path menuju gambar
-                                      width: 24, // Lebar gambar
-                                      height: 24, // Tinggi gambar
-                                    ),
-                                    Spacer(), // Menggunakan Spacer agar Switch berada di paling kanan
-                                    // Teks status ON/OFF
-                                    Text(
-                                      _switchValueSore
-                                          ? "ON"
-                                          : "OFF", // Menampilkan ON atau OFF berdasarkan status switch
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: _switchValueSore
-                                            ? Colors.green
-                                            : Colors
-                                                .red, // Warna teks sesuai status
-                                      ),
-                                    ),
-                                    SizedBox(
-                                        width:
-                                            10), // Jarak antara teks dan switch
-                                    Switch(
-                                      value: _switchValueSore,
-                                      onChanged: (bool value) {
-                                        setState(() {
-                                          _switchValueSore = value;
-                                        });
-                                      },
-                                      activeColor: Colors
-                                          .green, // Warna ketika switch dalam keadaan on
-                                      inactiveThumbColor: Colors
-                                          .red, // Warna ketika switch dalam keadaan off
-                                      inactiveTrackColor: Colors
-                                          .grey[300], // Warna track ketika off
-                                    ),
-                                  ],
-                                ),
-                                Column(
-                                  children: [
-                                    Center(
-                                      // Menggunakan Center untuk menempatkan teks di tengah
-                                      child: RichText(
-                                        text: TextSpan(
-                                          style: TextStyle(
-                                            fontSize:
-                                                14, // Ukuran font default untuk seluruh teks
-                                            color: Colors
-                                                .black, // Warna default untuk seluruh teks
-                                          ),
-                                          children: [
-                                            TextSpan(
-                                              text:
-                                                  "Berat pakan yang diberikan ", // Teks berat pakan
-                                              style: TextStyle(
-                                                fontSize:
-                                                    14, // Ukuran font untuk berat pakan
-                                                color: Colors
-                                                    .black, // Warna hitam untuk berat pakan
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: "(kg)", // Teks kg
-                                              style: TextStyle(
-                                                fontSize:
-                                                    12, // Ukuran font untuk kg
-                                                color: Colors
-                                                    .grey, // Warna abu untuk kg
-                                                fontWeight: FontWeight
-                                                    .w600, // Tebal untuk kg
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                        height:
-                                            20), // Jarak antara teks dan slider
-                                    // Slider untuk memilih berat pakan
-                                    Slider(
-                                      value: _beratPakanSore,
-                                      min: 1,
-                                      max: 5,
-                                      divisions:
-                                          4, // Membagi slider menjadi 4 step (1, 2, 3, 4, 5)
-                                      label:
-                                          "${_beratPakanSore.toStringAsFixed(1)} kg", // Label di atas slider
-                                      onChanged: (double value) {
-                                        setState(() {
-                                          _beratPakanSore = value;
-                                        });
-                                      },
-                                      activeColor: Colors.green,
-                                      inactiveColor: Colors.grey[300],
-                                    ),
-                                    Text(
-                                      "Berat pakan: ${_beratPakanSore.toStringAsFixed(1)} kg",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  FeedCardWidget(
+                    feedTime:
+                        "Sore", // Waktu makan (Morning, Afternoon, Evening, etc.)
+                    feedWeight: soreFeedWeight, // Berat pakan dalam kg
+                    initialSwitchValue: false, // Status switch (ON atau OFF)
                   ),
                   SizedBox(height: 5),
-                  // pemberian pakan malam
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: MediaQuery.of(context).size.width -
-                            60, // Lebar menyesuaikan dengan lebar layar
-                        margin: EdgeInsets.symmetric(
-                            horizontal: 30), // Margin kiri dan kanan
-                        child: Card(
-                          color: Colors.white,
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.all(15), // Padding untuk teks
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment
-                                      .center, // Menyelaraskan teks dan gambar secara vertikal
-                                  children: [
-                                    Text(
-                                      "Malam",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    SizedBox(
-                                        width:
-                                            5), // Jarak kecil antara teks dan gambar
-                                    Image.asset(
-                                      'assets/ic-malam.png', // Path menuju gambar
-                                      width: 24, // Lebar gambar
-                                      height: 24, // Tinggi gambar
-                                    ),
-                                    Spacer(), // Menggunakan Spacer agar Switch berada di paling kanan
-                                    // Teks status ON/OFF
-                                    Text(
-                                      _switchValueMalam
-                                          ? "ON"
-                                          : "OFF", // Menampilkan ON atau OFF berdasarkan status switch
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: _switchValueMalam
-                                            ? Colors.green
-                                            : Colors
-                                                .red, // Warna teks sesuai status
-                                      ),
-                                    ),
-                                    SizedBox(
-                                        width:
-                                            10), // Jarak antara teks dan switch
-                                    Switch(
-                                      value: _switchValueMalam,
-                                      onChanged: (bool value) {
-                                        setState(() {
-                                          _switchValueMalam = value;
-                                        });
-                                      },
-                                      activeColor: Colors
-                                          .green, // Warna ketika switch dalam keadaan on
-                                      inactiveThumbColor: Colors
-                                          .red, // Warna ketika switch dalam keadaan off
-                                      inactiveTrackColor: Colors
-                                          .grey[300], // Warna track ketika off
-                                    ),
-                                  ],
-                                ),
-                                Column(
-                                  children: [
-                                    Center(
-                                      // Menggunakan Center untuk menempatkan teks di tengah
-                                      child: RichText(
-                                        text: TextSpan(
-                                          style: TextStyle(
-                                            fontSize:
-                                                14, // Ukuran font default untuk seluruh teks
-                                            color: Colors
-                                                .black, // Warna default untuk seluruh teks
-                                          ),
-                                          children: [
-                                            TextSpan(
-                                              text:
-                                                  "Berat pakan yang diberikan ", // Teks berat pakan
-                                              style: TextStyle(
-                                                fontSize:
-                                                    14, // Ukuran font untuk berat pakan
-                                                color: Colors
-                                                    .black, // Warna hitam untuk berat pakan
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: "(kg)", // Teks kg
-                                              style: TextStyle(
-                                                fontSize:
-                                                    12, // Ukuran font untuk kg
-                                                color: Colors
-                                                    .grey, // Warna abu untuk kg
-                                                fontWeight: FontWeight
-                                                    .w600, // Tebal untuk kg
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                        height:
-                                            10), // Jarak antara teks dan slider
-                                    // Slider untuk memilih berat pakan
-                                    Slider(
-                                      value: _beratPakanMalam,
-                                      min: 1,
-                                      max: 5,
-                                      divisions:
-                                          4, // Membagi slider menjadi 4 step (1, 2, 3, 4, 5)
-                                      label:
-                                          "${_beratPakanMalam.toStringAsFixed(1)} kg", // Label di atas slider
-                                      onChanged: (double value) {
-                                        setState(() {
-                                          _beratPakanMalam = value;
-                                        });
-                                      },
-                                      activeColor: Colors.green,
-                                      inactiveColor: Colors.grey[300],
-                                    ),
-                                    Text(
-                                      "Berat pakan: ${_beratPakanMalam.toStringAsFixed(1)} kg",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 20),
-                    ],
+                  FeedCardWidget(
+                    feedTime:
+                        "Malam", // Waktu makan (Morning, Afternoon, Evening, etc.)
+                    feedWeight: malamFeedWeight, // Berat pakan dalam kg
+                    initialSwitchValue: false, // Status switch (ON atau OFF)
                   ),
                 ],
               ),
