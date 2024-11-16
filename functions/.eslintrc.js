@@ -8,7 +8,7 @@ module.exports = {
   },
   extends: [
     "eslint:recommended",
-    "google",
+    "google", // pastikan sudah diinstal
   ],
   rules: {
     "no-restricted-globals": ["error", "name", "length"],
