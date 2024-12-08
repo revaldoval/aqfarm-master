@@ -1,12 +1,13 @@
-import 'dart:convert';
-import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:kolamleleiot/main.dart';
 import 'package:kolamleleiot/view/beranda.dart';
 import 'package:kolamleleiot/view/informasi.dart';
 import 'package:kolamleleiot/view/monitoring.dart';
 import 'package:kolamleleiot/tidak%20terpakai/profil.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:http/http.dart' as http;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BottomNavigation extends StatefulWidget {
   @override
@@ -17,11 +18,17 @@ class _BottomNavigationState extends State<BottomNavigation> {
   int _selectedIndex = 0;
   final DatabaseReference _ammoniaRef =
       FirebaseDatabase.instance.ref('data/amoniak');
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
   @override
   void initState() {
     super.initState();
-    monitorAmmonia();
+    checkAmmoniaLevelAndAddNotification();
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    _initializeNotifications();
+    // monitorAmmonia();
+    scheduleFeedingNotifications();
+    startPeriodicCheck();
   }
 
   void _onItemTapped(int index) {
@@ -30,100 +37,172 @@ class _BottomNavigationState extends State<BottomNavigation> {
     });
   }
 
-  void monitorAmmonia() {
-    _ammoniaRef.onValue.listen((DatabaseEvent event) {
-      final value = event.snapshot.value;
-      if (value != null) {
-        final ammoniaLevel = int.tryParse(value.toString()) ?? 0;
-        print("Kadar amoniak: $ammoniaLevel");
-        if (ammoniaLevel > 100) {
-          sendNotification(ammoniaLevel);
-        }
+// Fungsi untuk menambah notifikasi ke Firestore
+  Future<void> addNotification(String title, String body) async {
+    try {
+      final timestamp = Timestamp.now(); // Mendapatkan timestamp saat ini
+      final firestore = FirebaseFirestore.instance;
+
+      // Menambahkan notifikasi baru ke Firestore tanpa idNotif
+      await firestore.collection('notifications').add({
+        'tipeNotifikasi': title, // Pastikan ini adalah string
+        'detailText': body, // Pastikan ini adalah string
+        'tanggal': timestamp, // Tanggal dalam bentuk Timestamp
+      });
+
+      print("Notifikasi berhasil ditambahkan ke Firestore.");
+    } catch (e) {
+      print("Error menambahkan notifikasi: $e");
+    }
+  }
+
+// Fungsi untuk memeriksa kadar amoniak dan menambah notifikasi
+  Future<void> checkAmmoniaLevelAndAddNotification() async {
+    final event = await _ammoniaRef.once();
+    final value = event.snapshot.value;
+
+    if (value != null) {
+      final ammoniaLevel = int.tryParse(value.toString()) ?? 0;
+
+      // Jika kadar amoniak lebih dari 100, tampilkan notifikasi
+      if (ammoniaLevel > 100) {
+        _showAmmoniaNotification(ammoniaLevel);
+
+        // Memanggil addNotification untuk menambah notifikasi dengan detail
+        addNotification('pengurasan',
+            'Pengurasan air kolam sedang berlangsung karena kadar amonia telah mencapai batas. Proses ini akan selesai dalam beberapa saat.');
       }
+    } else {
+      // Jika data tidak tersedia, periksa lagi nanti
+      print("Data amoniak tidak tersedia. Cek ulang nanti.");
+    }
+  }
+
+// Fungsi untuk menjalankan pemeriksaan kadar amoniak setiap 10 menit
+  void startPeriodicCheck() {
+    // Menjadwalkan pemeriksaan kadar amoniak setiap 10 menit (600 detik)
+    Timer.periodic(Duration(seconds: 10), (Timer t) async {
+      // Panggil fungsi untuk memeriksa kadar amoniak dan menambah notifikasi
+      await checkAmmoniaLevelAndAddNotification();
     });
   }
 
-  Future<void> sendNotification(int ammoniaLevel) async {
-    const String fcmUrl =
-        'https://fcm.googleapis.com/v1/projects/aq-farm/messages:send';
-    final String serviceAccountKey = await DefaultAssetBundle.of(context)
-        .loadString('assets/service_account_key.json');
-    final Map<String, dynamic> serviceAccount = jsonDecode(serviceAccountKey);
-    final String accessToken = await getAccessToken(serviceAccount);
+  /// Inisialisasi notifikasi
+  Future<void> _initializeNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings(
+            '@mipmap/ic_launcher'); // Ganti dengan nama ikon aplikasi Anda
 
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $accessToken',
-    };
+    final InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
 
-    final body = {
-      "message": {
-        "topic": "amoniakAlert",
-        "notification": {
-          "title": "Peringatan Kadar Amoniak!",
-          "body":
-              "Kadar amoniak sudah mencapai $ammoniaLevel. Segera lakukan tindakan.",
-        },
-        "data": {
-          "amoniak": ammoniaLevel.toString(),
-        },
-      },
-    };
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
 
+  // /// Memantau kadar amoniak secara berulang
+  // void monitorAmmonia() {
+  //   void checkAmmonia() async {
+  //     final event = await _ammoniaRef.once();
+  //     final value = event.snapshot.value;
+
+  //     if (value != null) {
+  //       final ammoniaLevel = int.tryParse(value.toString()) ?? 0;
+
+  //       if (ammoniaLevel > 100) {
+  //         _showAmmoniaNotification(ammoniaLevel);
+  //       }
+
+  //       // Jadwalkan pemeriksaan ulang dalam 10 menit
+  //       Future.delayed(Duration(minutes: 10), checkAmmonia);
+  //     } else {
+  //       // Jika data tidak tersedia, tetap jadwalkan pemeriksaan ulang
+  //       Future.delayed(Duration(minutes: 10), checkAmmonia);
+  //     }
+  //   }
+
+  //   // Memulai pemantauan pertama kali
+  //   checkAmmonia();
+  // }
+
+  /// Fungsi untuk memainkan notifikasi dengan suara khusus
+  Future<void> _showNotificationWithSound(String title, String body) async {
     try {
-      final response = await http.post(
-        Uri.parse(fcmUrl),
-        headers: headers,
-        body: jsonEncode(body),
+      // Menghasilkan ID unik untuk setiap notifikasi dalam rentang valid
+      final notificationId = DateTime.now().millisecondsSinceEpoch % (2 ^ 31);
+
+      final androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        'custom_sound_channel', // ID channel
+        'Notifikasi Suara Khusus', // Nama channel
+        channelDescription: 'Notifikasi dengan suara khusus',
+        sound: RawResourceAndroidNotificationSound(
+            'rezalele'), // Nama file suara tanpa ekstensi
+        importance: Importance.high,
+        priority: Priority.high,
+        playSound: true, // Pastikan suara diputar
       );
 
-      if (response.statusCode == 200) {
-        print("Notifikasi berhasil dikirim!");
-      } else {
-        print("Gagal mengirim notifikasi: ${response.body}");
-      }
+      final platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+      );
+
+      await flutterLocalNotificationsPlugin.show(
+        notificationId, // Gunakan ID unik untuk setiap notifikasi
+        title, // Judul notifikasi
+        body, // Isi notifikasi
+        platformChannelSpecifics,
+      );
+
+      // Jika notifikasi berhasil diputar
+      print("Notifikasi berhasil diputar dengan suara '$title'.");
     } catch (e) {
-      print("Error saat mengirim notifikasi: $e");
+      // Menangani kesalahan jika ada masalah dalam memutar suara
+      print("Gagal memutar suara notifikasi: $e");
     }
   }
 
-  Future<String> getAccessToken(Map<String, dynamic> serviceAccount) async {
-    final url = "https://oauth2.googleapis.com/token";
-    final response = await http.post(
-      Uri.parse(url),
-      body: {
-        "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
-        "assertion": createJwt(serviceAccount),
-      },
+  /// Menampilkan notifikasi kadar amoniak
+  void _showAmmoniaNotification(int ammoniaLevel) {
+    _showNotificationWithSound(
+      'Peringatan Kadar Amoniak!',
+      'Kadar amoniak telah mencapai $ammoniaLevel. Kolam akan dikuras secara otomatis.',
     );
-
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      return responseData['access_token'];
-    } else {
-      throw Exception('Gagal mendapatkan token akses');
-    }
   }
 
-  String createJwt(Map<String, dynamic> serviceAccount) {
+  /// Menjadwalkan notifikasi pemberian pakan otomatis
+  void scheduleFeedingNotifications() {
     final now = DateTime.now();
-    final expiration = now.add(Duration(hours: 1));
+    final scheduleTimes = [
+      TimeOfDay(hour: 6, minute: 0),
+      TimeOfDay(hour: 15, minute: 0),
+      TimeOfDay(hour: 20, minute: 0),
+    ];
 
-    final jwt = JWT(
-      {
-        'iss': serviceAccount['client_email'],
-        'scope': 'https://www.googleapis.com/auth/firebase.messaging',
-        'aud': serviceAccount['token_uri'],
-        'iat': now.millisecondsSinceEpoch ~/ 1000,
-        'exp': expiration.millisecondsSinceEpoch ~/ 1000,
-      },
-    );
+    for (var time in scheduleTimes) {
+      final scheduleDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        time.hour,
+        time.minute,
+      );
 
-    final privateKey = serviceAccount['private_key'] as String;
-    return jwt.sign(
-      RSAPrivateKey(privateKey),
-      algorithm: JWTAlgorithm.RS256,
-    );
+      if (scheduleDateTime.isAfter(now)) {
+        _scheduleFeedingNotification(scheduleDateTime);
+      }
+    }
+  }
+
+  /// Menampilkan notifikasi pemberian pakan
+  void _scheduleFeedingNotification(DateTime scheduleDateTime) {
+    final secondsUntilScheduled =
+        scheduleDateTime.difference(DateTime.now()).inSeconds;
+
+    Future.delayed(Duration(seconds: secondsUntilScheduled), () {
+      _showNotificationWithSound(
+        'Pemberian Pakan Otomatis',
+        'Waktu pemberian pakan otomatis telah tiba. Pakan sedang disalurkan sesuai jadwal yang telah diatur.',
+      );
+    });
   }
 
   @override

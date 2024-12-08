@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
-import 'package:kolamleleiot/componen/collors.dart';
 
 class MonitoringScreen extends StatefulWidget {
   @override
@@ -38,131 +37,113 @@ class _MonitoringScreenState extends State<MonitoringScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Monitor Kamera",
+          "Monitor",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        // Tambahkan SingleChildScrollView
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Card untuk video pertama
-              Card(
-                elevation: 5,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Kamera 1 : Amoniak Sensor",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      YoutubePlayer(
-                        controller: _controller1,
-                        showVideoProgressIndicator: true,
-                        progressIndicatorColor: Color(0xFF62CDFA),
-                      ),
-                    ],
-                  ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Teks Deskripsi
+            Text(
+              "Anda dapat memonitor kamera secara real-time",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Card untuk Video
+            Card(
+              elevation: 5,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Container(
+                width: double.infinity,
+                height: 200,
+                child: YoutubePlayer(
+                  controller: _controller1,
+                  showVideoProgressIndicator: true,
+                  progressIndicatorColor: Color(0xFF62CDFA),
                 ),
               ),
-              SizedBox(height: 20),
-              // Card untuk informasi
-              Card(
-                elevation: 8,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.info,
-                            color: Colors.blueAccent,
-                            size: 30,
-                          ),
-                          SizedBox(width: 10),
-                          Text(
-                            "Informasi Sensor Amoniak",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blueAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        "Sensor Amoniak digunakan untuk memantau tingkat amonia dalam air. "
-                        "Tingkat amonia yang tinggi dapat berbahaya bagi kehidupan akuatik. "
-                        "Sensor ini memberikan informasi real-time tentang kualitas air.",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        "Tips Pemantauan:",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        "- Pastikan sensor bersih dan berfungsi dengan baik.\n"
-                        "- Lakukan kalibrasi secara berkala.\n"
-                        "- Perhatikan perubahan mendadak pada data amonia.",
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          ElevatedButton(
-                            onPressed: () {
-                              // Tindakan yang diinginkan ketika tombol ditekan
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  ColorConstants.primaryColor, // Warna tombol
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              "Pelajari Lebih Lanjut",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+            ),
+            const SizedBox(height: 20),
+            // Tombol Kamera
+            // CustomButton(
+            //   icon: Icons.camera_alt,
+            //   text: "Kamera",
+            //   isActive: true,
+            // ),
+            // const SizedBox(height: 10),
+            // // Tombol Lampu
+            // CustomButton(
+            //   icon: Icons.lightbulb,
+            //   text: "Lampu",
+            //   isActive: true,
+            // ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Widget CustomButton untuk Kamera dan Lampu
+class CustomButton extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool isActive;
+
+  const CustomButton({
+    required this.icon,
+    required this.text,
+    required this.isActive,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: Color(0xFF0B7FB5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              const SizedBox(width: 10),
+              Icon(
+                icon,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                text,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
                 ),
               ),
             ],
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: Icon(
+              isActive ? Icons.check_circle : Icons.radio_button_unchecked,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }

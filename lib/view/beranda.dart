@@ -18,13 +18,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  late String currentTime;
   String suhu = "Loading...";
   String currentAmoniaLevel = "Loading...";
   String amoniaLevelText = "Loading...";
 
-  double pagiFeedWeight = 0.5; // default 0.5
-  double soreFeedWeight = 0.5; // default 0.5
-  double malamFeedWeight = 0.5; // default 0.5
+  double pagiFeedWeight = 0.0; // default 0.5
+  double soreFeedWeight = 0.0; // default 0.5
+  double malamFeedWeight = 0.0; // default 0.5
 
   // bool _malamSwitchValue = false;
   // double _malamWeight = 0.0;
@@ -51,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _getSuhu();
     _getAmoniak();
     _getFeedWeight();
+    _updateTime();
   }
 
   void _getSuhu() {
@@ -80,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
         .onValue
         .listen((DatabaseEvent event) {
       final String makanPagi = event.snapshot.value.toString();
-      double makanPagiWeight = double.tryParse(makanPagi) ?? 0.5; // default 0.5
+      double makanPagiWeight = double.tryParse(makanPagi) ?? 0.0; // default 0.5
 
       setState(() {
         pagiFeedWeight = makanPagiWeight;
@@ -92,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
         .onValue
         .listen((DatabaseEvent event) {
       final String makanSore = event.snapshot.value.toString();
-      double makanSoreWeight = double.tryParse(makanSore) ?? 0.5; // default 0.5
+      double makanSoreWeight = double.tryParse(makanSore) ?? 0.0; // default 0.5
 
       setState(() {
         soreFeedWeight = makanSoreWeight;
@@ -105,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
         .listen((DatabaseEvent event) {
       final String makanMalam = event.snapshot.value.toString();
       double makanMalamWeight =
-          double.tryParse(makanMalam) ?? 0.5; // default 0.5
+          double.tryParse(makanMalam) ?? 0.0; // default 0.5
 
       setState(() {
         malamFeedWeight = makanMalamWeight;
@@ -113,10 +115,17 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _updateTime() {
+    final now = DateTime.now();
+    // Format waktu ke dalam format 12 jam dengan AM/PM
+    currentTime = DateFormat('hh:mm a').format(now); // Format 'a' untuk AM/PM
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     // Mengambil waktu saat ini
-    String currentTime = DateFormat('HH:mm').format(DateTime.now());
+    // String currentTime = DateFormat('HH:mm').format(DateTime.now());
 
     return Scaffold(
       appBar: AppBar(
@@ -160,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: CustomNotificationIcon(
                 hasNotification:
-                    true, // Ganti dengan true atau false sesuai kondisi notifikasi
+                    false, // Ganti dengan true atau false sesuai kondisi notifikasi
               ),
             ),
           ),
@@ -224,12 +233,27 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      currentTime,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: ColorConstants.greyColor,
-                                      ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          currentTime,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: ColorConstants.greyColor,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                            width:
+                                                8), // Jarak antara teks dan garis
+                                        Container(
+                                          width: 44,
+                                          height: 4,
+                                          color: Color(
+                                              0xFF5DCCFC), // Warna #5DCCFC
+                                        ),
+                                      ],
                                     ),
                                     SizedBox(height: 5),
                                     Text(
@@ -245,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
-                                          "Saat Ini",
+                                          "saat Ini",
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
@@ -311,9 +335,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 30),
+                      padding: const EdgeInsets.only(left: 60),
                       child: Text(
-                        "Suhu Air : " + suhu,
+                        "Suhu Air",
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
@@ -338,7 +362,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Suhu Air : " + suhu,
+                                currentTime,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 20,
+                                  color: ColorConstants.blackColor,
+                                ),
+                              ),
+                              Text(
+                                "Suhu Air " + suhu + "°C",
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,

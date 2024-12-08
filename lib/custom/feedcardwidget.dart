@@ -122,11 +122,13 @@ class _FeedCardWidgetState extends State<FeedCardWidget> {
               SizedBox(height: 20),
               Slider(
                 value: widget.feedWeight,
-                min: 0.5,
+                min: 0.0,
                 max: 50,
                 divisions: 99,
                 label: "${widget.feedWeight.toStringAsFixed(1)} kg",
-                onChanged: null,
+                onChanged: (value) => 0,
+                activeColor: Colors.green,
+                inactiveColor: Colors.grey,
               ),
               Center(
                 child: Text(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class NotifikasiScreen extends StatelessWidget {
@@ -8,103 +9,123 @@ class NotifikasiScreen extends StatelessWidget {
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('hh:mm a, dd MMMM yyyy').format(now);
 
-    // Simulasi tipe notifikasi
-    List<String> tipeNotifikasi = [
-      'pengurasan',
-      'pengisian',
-      'pakan',
-    ];
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          "Notifikasi",
-          style: TextStyle(fontWeight: FontWeight.bold),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      // navigatorKey: Bottom.navigatorKey,
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            "Notifikasi",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          centerTitle: true,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back), // Ikon tombol kembali
+            onPressed: () {
+              Navigator.pop(context); // Kembali ke layar sebelumnya
+            },
+          ),
         ),
-        // backgroundColor: Colors.white,
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Notifikasi Terbaru",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Notifikasi Terbaru",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemCount: tipeNotifikasi.length,
-                itemBuilder: (context, index) {
-                  // Tentukan icon berdasarkan tipe notifikasi
-                  String iconPath;
-                  String detailText;
+              SizedBox(height: 16),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('notifications')
+                      .orderBy('tanggal',
+                          descending: true) // Mengurutkan berdasarkan tanggal
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
 
-                  if (tipeNotifikasi[index] == 'pengurasan') {
-                    iconPath = 'assets/ic-pengurasan.png';
-                    detailText =
-                        "Pengurasan air kolam sedang berlangsung karena kadar amonia telah mencapai batas 0,05 ppm. Proses ini akan selesai dalam beberapa saat.";
-                  } else if (tipeNotifikasi[index] == 'pengisian') {
-                    iconPath = 'assets/ic-pengisian.png';
-                    detailText =
-                        "Pengisian air kolam telah dimulai untuk menjaga kualitas air. Mohon pastikan semua sistem berjalan dengan baik selama proses ini.";
-                  } else if (tipeNotifikasi[index] == 'pakan') {
-                    iconPath = 'assets/ic-pakan.png';
-                    detailText =
-                        "Waktu pemberian pakan otomatis telah tiba. Pakan sedang disalurkan sesuai jadwal yang telah diatur.";
-                  } else {
-                    iconPath =
-                        'assets/default.png'; // Default jika tipe tidak cocok
-                    detailText = "Detail notifikasi tidak tersedia.";
-                  }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return Center(child: Text('Tidak ada notifikasi.'));
+                    }
 
-                  return Card(
-                    elevation: 2,
-                    margin: EdgeInsets.symmetric(vertical: 8),
-                    child: ListTile(
-                      leading: Image.asset(
-                        iconPath, // Menampilkan icon berdasarkan tipe
-                        width: 40,
-                        height: 40,
-                      ),
-                      // title: Text(
-                      //     "Notifikasi ${index + 1} - ${tipeNotifikasi[index]}"),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            detailText,
-                            style: TextStyle(
-                              fontSize: 12, // Ukuran teks lebih kecil
-                              color: Colors.black, // Warna teks
+                    var notifications = snapshot.data!.docs;
+
+                    return ListView.builder(
+                      itemCount: notifications.length,
+                      itemBuilder: (context, index) {
+                        var notification = notifications[index];
+                        String tipeNotifikasi = notification['tipeNotifikasi'];
+                        String detailText = notification['detailText'];
+                        String iconPath = '';
+
+                        // Menentukan icon berdasarkan tipe notifikasi
+                        if (tipeNotifikasi == 'pengurasan') {
+                          iconPath = 'assets/ic-pengurasan.png';
+                        } else if (tipeNotifikasi == 'panen') {
+                          iconPath = 'assets/ic-pengisian.png';
+                        } else if (tipeNotifikasi == 'pakan') {
+                          iconPath = 'assets/ic-pakan.png';
+                        } else {
+                          iconPath =
+                              'assets/default.png'; // Default jika tipe tidak cocok
+                        }
+
+                        // Format tanggal dari Firestore
+                        Timestamp timestamp = notification['tanggal'];
+                        DateTime notificationDate = timestamp.toDate();
+                        String formattedNotificationDate =
+                            DateFormat('hh:mm a, dd MMMM yyyy')
+                                .format(notificationDate);
+
+                        return Card(
+                          elevation: 2,
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          child: ListTile(
+                            leading: Image.asset(
+                              iconPath, // Menampilkan icon berdasarkan tipe
+                              width: 40,
+                              height: 40,
                             ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            formattedDate,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12,
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  detailText,
+                                  style: TextStyle(
+                                    fontSize: 12, // Ukuran teks lebih kecil
+                                    color: Colors.black, // Warna teks
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  formattedNotificationDate,
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
+                            // trailing: Icon(Icons.more_vert), // icon titik 3
+                            onTap: () {
+                              // Aksi ketika notifikasi diklik
+                            },
                           ),
-                        ],
-                      ),
-                      trailing: Icon(Icons.more_vert), // icon titik 3
-                      // trailing: Icon(Icons.arrow_forward_ios), // icon panah
-                      onTap: () {
-                        // Aksi ketika notifikasi diklik
+                        );
                       },
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

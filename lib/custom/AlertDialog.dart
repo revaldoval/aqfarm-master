@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CancellationDialog {
-  static Future<bool?> show(BuildContext context) {
+  static Future<bool?> show(BuildContext context, {required String message}) {
     return showDialog<bool>(
       context: context,
       barrierDismissible: false, // user must tap button to dismiss
@@ -17,7 +17,7 @@ class CancellationDialog {
             ],
           ),
           content: Text(
-            "Apakah kamu yakin ingin mengatur jumlah bibit lele?",
+            message,
             style: TextStyle(fontSize: 16),
           ),
           actions: <Widget>[

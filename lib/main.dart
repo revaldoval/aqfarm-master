@@ -1,48 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:kolamleleiot/view/splashscreen.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:kolamleleiot/Notifikasi_push.dart';
 import 'package:kolamleleiot/custom/bottom_navigation.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:kolamleleiot/view/splashscreen.dart';
+
+// Inisialisasi notifikasi lokal
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+// Fungsi untuk menangani pesan FCM saat aplikasi di background
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print('Pesan diterima di background: ${message.notification?.title}');
+}
+
+// Fungsi untuk menampilkan notifikasi lokal
+void _showNotification(RemoteMessage message) async {
+  const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    'your_channel_id',
+    'your_channel_name',
+    channelDescription: 'Your channel description',
+    importance: Importance.high,
+    priority: Priority.high,
+  );
+  const NotificationDetails platformDetails =
+      NotificationDetails(android: androidDetails);
+
+  await flutterLocalNotificationsPlugin.show(
+    0,
+    message.notification?.title,
+    message.notification?.body,
+    platformDetails,
+    payload: 'item x',
+  );
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  FirebaseMessaging messaging = FirebaseMessaging.instance;
+  // Konfigurasi notifikasi lokal
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+  const InitializationSettings initializationSettings =
+      InitializationSettings(android: initializationSettingsAndroid);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-  // Meminta izin untuk notifikasi (terutama untuk iOS)
-  NotificationSettings settings = await messaging.requestPermission();
-  if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-    print('Pengguna memberikan izin notifikasi');
-  } else {
-    print('Pengguna menolak izin notifikasi');
-  }
-
-  // Mendapatkan token perangkat FCM
-  String? token = await messaging.getToken();
-  print("FCM Token: $token");
-
-  // Mendaftarkan perangkat ke topik untuk menerima notifikasi
-  await FirebaseMessaging.instance.subscribeToTopic("amoniakAlert");
-
+  // Konfigurasi Firebase Messaging
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Mendengarkan pesan yang diterima di foreground
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    // Penanganan notifikasi di latar depan
+    print('Pesan diterima di foreground: ${message.notification?.title}');
     if (message.notification != null) {
-      print('Notifikasi di latar depan diterima: ${message.notification?.title}');
-      // Tampilkan notifikasi atau update UI sesuai kebutuhan
+      // Menampilkan notifikasi lokal saat pesan diterima
+      _showNotification(message);
     }
   });
-
   runApp(MyApp());
-}
-
-// Penanganan pesan di background
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print('Notifikasi background diterima: ${message.notification?.title}');
-  // Kamu bisa menambahkan logika untuk menangani pesan di background di sini
 }
 
 class MyApp extends StatelessWidget {
@@ -51,13 +67,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Aplikasi Kolam Lele',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue),
       home: SplashScreen(),
-      routes: {
-        '/home': (context) => BottomNavigation(),
-      },
+      routes: {'/home': (context) => BottomNavigation()},
     );
   }
 }

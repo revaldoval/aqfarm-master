@@ -21,6 +21,8 @@ dependencies:
   firebase_analytics: ^10.10.7
   http: ^1.2.2
   dart_jsonwebtoken: ^2.3.0
+  flutter_local_notifications: ^18.0.1
+  cloud_firestore: ^4.17.5
   # flutter_local_notifications: ^12.0.4
 
 
@@ -56,5 +58,6 @@ flutter:
     - assets/logo aquafarm.png
     - assets/setnama.png
     - assets/lele.png
-    - assets/service_account_key.json
+    # - assets/service_account_key.json
+    - assets/rezalele.mp3
     - android/app/src/main/res/drawable/icon.png
