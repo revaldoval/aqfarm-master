@@ -172,7 +172,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
   void scheduleFeedingNotifications() {
     final now = DateTime.now();
     final scheduleTimes = [
-      TimeOfDay(hour: 6, minute: 0),
+      TimeOfDay(hour: 10, minute: 29),
       TimeOfDay(hour: 15, minute: 0),
       TimeOfDay(hour: 20, minute: 0),
     ];

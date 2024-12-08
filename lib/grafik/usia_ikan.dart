@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:kolamleleiot/custom/AlertDialog.dart';
 import 'package:kolamleleiot/custom/popup.dart';
 import 'package:kolamleleiot/main.dart';
 
@@ -40,8 +41,6 @@ class _CircularProgressTextState extends State<CircularProgressText> {
       }
     });
   }
-
-  
 
   @override
   void dispose() {
@@ -101,12 +100,21 @@ class _CircularProgressTextState extends State<CircularProgressText> {
                 height: 4), // Jarak kecil antara persentase dan teks Panen
             GestureDetector(
               onTap: isHarvestable
-                  ? () {
-                      if (widget.onHarvest != null) {
-                        widget
-                            .onHarvest!(); // Memanggil callback yang diberikan
+                  ? () async {
+                      bool? result = await CancellationDialog.show(
+                        context,
+                        message:
+                            "Apakah kamu yakin ingin memanen lele?", // Custom message
+                      );
+                      if (result == true) {
+                        if (widget.onHarvest != null) {
+                          widget
+                              .onHarvest!(); // Memanggil callback yang diberikan
+                        }
+                        print("Panen button pressed");
+                      } else {
+                        print("User canceled the dialog");
                       }
-                      print("Panen button pressed");
                     }
                   : null,
               child: Text(

@@ -316,6 +316,7 @@ class _InformasiScreenState extends State<InformasiScreen> {
                         children: [
                           CircularProgressText(
                             onHarvest: () {
+                              
                               PanenLele();
                               // Memanggil PanenLele() ketika tombol Panen ditekan
                               print('Memanen lele...');
