@@ -17,14 +17,14 @@ class BottomNavigation extends StatefulWidget {
 
 class _BottomNavigationState extends State<BottomNavigation> {
   int _selectedIndex = 0;
-  final DatabaseReference _ammoniaRef =
-      FirebaseDatabase.instance.ref('data/amoniak');
+  final DatabaseReference _pumpStatusRef =
+      FirebaseDatabase.instance.ref('pompa/status');
   late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
   @override
   void initState() {
     super.initState();
-    checkAmmoniaLevelAndAddNotification();
+    checkPumpStatusAndAddNotification();
     flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
     _initializeNotifications();
     // monitorAmmonia();
@@ -57,34 +57,35 @@ class _BottomNavigationState extends State<BottomNavigation> {
     }
   }
 
-// Fungsi untuk memeriksa kadar amoniak dan menambah notifikasi
-  Future<void> checkAmmoniaLevelAndAddNotification() async {
-    final event = await _ammoniaRef.once();
-    final value = event.snapshot.value;
+// Fungsi untuk memeriksa status pompa dan menambah notifikasi jika diperlukan
+  Future<void> checkPumpStatusAndAddNotification() async {
+    // Ambil status pompa dari Firebase
+    final pumpStatusEvent = await _pumpStatusRef.once();
+    final pumpStatus = pumpStatusEvent.snapshot.value;
 
-    if (value != null) {
-      final ammoniaLevel = int.tryParse(value.toString()) ?? 0;
+    // Jika status pompa adalah 'pengurasan', tampilkan notifikasi
+    if (pumpStatus == 'pengurasan') {
+      // Tampilkan notifikasi kadar amoniak
+      _showAmmoniaNotification(); // Parameter 0 karena kadar amoniak tidak dicek
 
-      // Jika kadar amoniak lebih dari 100, tampilkan notifikasi
-      if (ammoniaLevel > 100) {
-        _showAmmoniaNotification(ammoniaLevel);
-
-        // Memanggil addNotification untuk menambah notifikasi dengan detail
-        addNotification('pengurasan',
-            'Pengurasan air kolam sedang berlangsung karena kadar amonia telah mencapai batas. Proses ini akan selesai dalam beberapa saat.');
-      }
+      // Tambahkan notifikasi dengan detail
+      addNotification(
+        'pengurasan',
+        'Pengurasan air kolam sedang berlangsung karena kadar amonia telah mencapai batas. Proses ini akan selesai dalam beberapa saat.',
+      );
     } else {
-      // Jika data tidak tersedia, periksa lagi nanti
-      print("Data amoniak tidak tersedia. Cek ulang nanti.");
+      // Tidak ada tindakan jika status bukan 'pengurasan'
+      print(
+          "Status pompa bukan 'pengurasan'. Tidak ada notifikasi yang ditambahkan.");
     }
   }
 
-// Fungsi untuk menjalankan pemeriksaan kadar amoniak setiap 10 menit
+// Fungsi untuk menjalankan pemeriksaan status pompa setiap 10 menit
   void startPeriodicCheck() {
-    // Menjadwalkan pemeriksaan kadar amoniak setiap 10 menit (600 detik)
-    Timer.periodic(Duration(seconds: 10), (Timer t) async {
-      // Panggil fungsi untuk memeriksa kadar amoniak dan menambah notifikasi
-      await checkAmmoniaLevelAndAddNotification();
+    // Menjadwalkan pemeriksaan status pompa setiap 10 menit (600 detik)
+    Timer.periodic(Duration(minutes: 5), (Timer t) async {
+      // Panggil fungsi untuk memeriksa status pompa dan menambah notifikasi jika perlu
+      await checkPumpStatusAndAddNotification();
     });
   }
 
@@ -99,31 +100,6 @@ class _BottomNavigationState extends State<BottomNavigation> {
 
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
-
-  // /// Memantau kadar amoniak secara berulang
-  // void monitorAmmonia() {
-  //   void checkAmmonia() async {
-  //     final event = await _ammoniaRef.once();
-  //     final value = event.snapshot.value;
-
-  //     if (value != null) {
-  //       final ammoniaLevel = int.tryParse(value.toString()) ?? 0;
-
-  //       if (ammoniaLevel > 100) {
-  //         _showAmmoniaNotification(ammoniaLevel);
-  //       }
-
-  //       // Jadwalkan pemeriksaan ulang dalam 10 menit
-  //       Future.delayed(Duration(minutes: 10), checkAmmonia);
-  //     } else {
-  //       // Jika data tidak tersedia, tetap jadwalkan pemeriksaan ulang
-  //       Future.delayed(Duration(minutes: 10), checkAmmonia);
-  //     }
-  //   }
-
-  //   // Memulai pemantauan pertama kali
-  //   checkAmmonia();
-  // }
 
   /// Fungsi untuk memainkan notifikasi dengan suara khusus
   Future<void> _showNotificationWithSound(String title, String body) async {
@@ -162,10 +138,11 @@ class _BottomNavigationState extends State<BottomNavigation> {
   }
 
   /// Menampilkan notifikasi kadar amoniak
-  void _showAmmoniaNotification(int ammoniaLevel) {
+  /// Menampilkan notifikasi kadar amoniak
+  void _showAmmoniaNotification() {
     _showNotificationWithSound(
       'Peringatan Kadar Amoniak!',
-      'Kadar amoniak telah mencapai $ammoniaLevel. Kolam akan dikuras secara otomatis.',
+      'Kadar amoniak telah mencapai ambang batas. Kolam akan dikuras secara otomatis.',
     );
   }
 
@@ -173,9 +150,9 @@ class _BottomNavigationState extends State<BottomNavigation> {
   void scheduleFeedingNotifications() {
     final now = DateTime.now();
     final scheduleTimes = [
-      TimeOfDay(hour: 11, minute: 3),
-      TimeOfDay(hour: 15, minute: 0),
-      TimeOfDay(hour: 20, minute: 0),
+      TimeOfDay(hour: 08, minute: 0),
+      TimeOfDay(hour: 16, minute: 0),
+      TimeOfDay(hour: 21, minute: 0),
     ];
 
     for (var time in scheduleTimes) {

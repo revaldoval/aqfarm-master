@@ -9,7 +9,7 @@ class MonitoringScreen extends StatefulWidget {
 }
 
 class _MonitoringScreenState extends State<MonitoringScreen> {
-  String _baseUrl = 'http://192.168.18.93:5000';
+  String _baseUrl = '192.168.18.93';
   String? _base64Image;
   String? _previousBase64Image;
   bool _isLoading = true;
@@ -42,9 +42,9 @@ class _MonitoringScreenState extends State<MonitoringScreen> {
 
   Future<void> _fetchLatestFrame() async {
     try {
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      // final timestamp = DateTime.now().millisecondsSinceEpoch;
       final response = await http.get(
-        Uri.parse('$_baseUrl/latest_frame?timestamp=$timestamp'),
+        Uri.parse('http:://$_baseUrl:5000/latest_frame'),
         headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-cache',

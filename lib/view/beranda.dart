@@ -318,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                               "Pengurasan kolam akan dilakukan secara otomatis ketika kadar amonia mencapai ",
                                         ),
                                         TextSpan(
-                                          text: "0,05 ppm",
+                                          text: "0,1 ppm",
                                           style: TextStyle(
                                             color: ColorConstants.redColor,
                                             fontWeight: FontWeight.w600,
