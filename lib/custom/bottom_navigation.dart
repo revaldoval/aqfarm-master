@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:kolamleleiot/componen/collors.dart';
 import 'package:kolamleleiot/main.dart';
 import 'package:kolamleleiot/view/beranda.dart';
 import 'package:kolamleleiot/view/informasi.dart';
@@ -91,7 +92,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
   Future<void> _initializeNotifications() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings(
-            '@mipmap/ic_launcher'); // Ganti dengan nama ikon aplikasi Anda
+            '@mipmap/app_icon'); // Ganti dengan nama ikon aplikasi Anda
 
     final InitializationSettings initializationSettings =
         InitializationSettings(android: initializationSettingsAndroid);
@@ -172,7 +173,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
   void scheduleFeedingNotifications() {
     final now = DateTime.now();
     final scheduleTimes = [
-      TimeOfDay(hour: 10, minute: 38),
+      TimeOfDay(hour: 11, minute: 3),
       TimeOfDay(hour: 15, minute: 0),
       TimeOfDay(hour: 20, minute: 0),
     ];
@@ -202,6 +203,8 @@ class _BottomNavigationState extends State<BottomNavigation> {
         'Pemberian Pakan Otomatis',
         'Waktu pemberian pakan otomatis telah tiba. Pakan sedang disalurkan sesuai jadwal yang telah diatur.',
       );
+      addNotification('pakan',
+          'Waktu pemberian pakan otomatis telah tiba. Pakan sedang disalurkan sesuai jadwal yang telah diatur.');
     });
   }
 
@@ -211,7 +214,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
       HomeScreen(),
       MonitoringScreen(),
       InformasiScreen(),
-      ProfilScreen(),
+      // ProfilScreen(),
     ];
 
     return Scaffold(
@@ -219,36 +222,54 @@ class _BottomNavigationState extends State<BottomNavigation> {
         index: _selectedIndex,
         children: _pages,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF62CDFA), Colors.white],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      bottomNavigationBar: BottomNavigationBar(
+        items: <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: _selectedIndex == 0
+                ? _buildSelectedIcon(Icons.home)
+                : Icon(Icons.home, size: 24),
+            label: 'Home',
           ),
-        ),
-        child: BottomNavigationBar(
-          items: <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home, size: 24),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.monitor, size: 24),
-              label: 'Monitoring',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.info, size: 24),
-              label: 'Informasi',
-            ),
-          ],
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          selectedItemColor: Colors.black,
-          unselectedItemColor: Colors.black,
-          showUnselectedLabels: true,
-        ),
+          BottomNavigationBarItem(
+            icon: _selectedIndex == 1
+                ? _buildSelectedIcon(Icons.monitor)
+                : Icon(Icons.monitor, size: 24),
+            label: 'Monitoring',
+          ),
+          BottomNavigationBarItem(
+            icon: _selectedIndex == 2
+                ? _buildSelectedIcon(Icons.info)
+                : Icon(Icons.info, size: 24),
+            label: 'Informasi',
+          ),
+          // BottomNavigationBarItem(
+          //   icon: _selectedIndex == 3
+          //       ? _buildSelectedIcon(Icons.person)
+          //       : Icon(Icons.person, size: 24),
+          //   label: 'Profil',
+          // ),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.black,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+        selectedLabelStyle:
+            TextStyle(color: Colors.black), // Warna teks tetap hitam
+        unselectedLabelStyle: TextStyle(color: Colors.black),
       ),
+    );
+  }
+
+  Widget _buildSelectedIcon(IconData icon) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: ColorConstants.primaryColor,
+        borderRadius: BorderRadius.circular(12), // Sudut melengkung
+      ),
+      child: Icon(icon, color: Colors.white, size: 24),
     );
   }
 }

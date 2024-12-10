@@ -27,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   double soreFeedWeight = 0.0; // default 0.5
   double malamFeedWeight = 0.0; // default 0.5
 
+  bool hasNotification = false;
   // bool _malamSwitchValue = false;
   // double _malamWeight = 0.0;
   // bool _switchValueMalam = false;
@@ -45,7 +46,11 @@ class _HomeScreenState extends State<HomeScreen> {
       return 'Selamat Malam!';
     }
   }
-
+  void updateNotificationStatus(bool status) {
+    setState(() {
+      hasNotification = status;
+    });
+  }
   @override
   void initState() {
     super.initState();
@@ -53,6 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _getAmoniak();
     _getFeedWeight();
     _updateTime();
+    
   }
 
   void _getSuhu() {
@@ -168,8 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
               child: CustomNotificationIcon(
-                hasNotification:
-                    false, // Ganti dengan true atau false sesuai kondisi notifikasi
+ hasNotification: hasNotification, // Ganti dengan true atau false sesuai kondisi notifikasi
               ),
             ),
           ),
@@ -335,7 +340,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 60),
+                      padding: const EdgeInsets.only(left: 30),
                       child: Text(
                         "Suhu Air",
                         style: TextStyle(

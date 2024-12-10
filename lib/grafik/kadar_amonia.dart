@@ -34,8 +34,8 @@ class _AmoniaChartState extends State<AmoniaChart> {
   Widget build(BuildContext context) {
     return Center(
       child: SizedBox(
-        width: 140,
-        height: 140,
+        width: 120,
+        height: 120,
         child: CustomPaint(
           painter: CircularProgressPainter(
             progress: currentAmoniaLevelChart,

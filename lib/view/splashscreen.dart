@@ -21,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Inisialisasi AnimationController
     _controller = AnimationController(
-      duration: Duration(seconds: 6),
+      duration: Duration(seconds: 3),
       vsync: this,
     );
 
@@ -61,14 +61,14 @@ class _SplashScreenState extends State<SplashScreen>
     });
 
     // Tampilkan teks setelah animasi selesai
-    Timer(Duration(seconds: 3), () {
-      setState(() {
-        _showText = true;
-      });
-    });
+    // Timer(Duration(seconds: 3), () {
+    //   setState(() {
+    //     _showText = true;
+    //   });
+    // });
 
     // Timer untuk pindah ke halaman berikutnya setelah animasi
-    Timer(Duration(seconds: 8), () {
+    Timer(Duration(seconds: 4), () {
       Navigator.of(context).pushReplacementNamed(
           '/home'); // Ganti dengan route ke halaman berikutnya
     });
@@ -125,29 +125,29 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
               // Animasi teks muncul setelah logo melayang
-              if (_showText)
-                Positioned(
-                  bottom: 250, // Teks muncul di bagian bawah layar
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: AnimatedTextKit(
-                      animatedTexts: [
-                        TypewriterAnimatedText(
-                          'Selamat datang di aplikasi Kolam Lele',
-                          // textStyle: TextStyle(
-                          //   fontSize: 15.0,
-                          //   fontWeight: FontWeight.bold,
-                          //   color: Colors.black,
-                          // ),
-                          speed: Duration(
-                              milliseconds: 100), // Kecepatan animasi mengetik
-                        ),
-                      ],
-                      totalRepeatCount: 1, // Hanya sekali mengetik
-                    ),
-                  ),
-                ),
+              // if (_showText)
+              //   Positioned(
+              //     bottom: 250, // Teks muncul di bagian bawah layar
+              //     left: 0,
+              //     right: 0,
+              //     child: Center(
+              //       child: AnimatedTextKit(
+              //         animatedTexts: [
+              //           TypewriterAnimatedText(
+              //             'Selamat datang di aplikasi Kolam Lele',
+              //             // textStyle: TextStyle(
+              //             //   fontSize: 15.0,
+              //             //   fontWeight: FontWeight.bold,
+              //             //   color: Colors.black,
+              //             // ),
+              //             speed: Duration(
+              //                 milliseconds: 100), // Kecepatan animasi mengetik
+              //           ),
+              //         ],
+              //         totalRepeatCount: 1, // Hanya sekali mengetik
+              //       ),
+              //     ),
+              //   ),
             ],
           ),
         ));

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:async';
 
 class MonitoringScreen extends StatefulWidget {
   @override
@@ -7,143 +9,220 @@ class MonitoringScreen extends StatefulWidget {
 }
 
 class _MonitoringScreenState extends State<MonitoringScreen> {
-  late YoutubePlayerController _controller1;
+  String _baseUrl = 'http://192.168.18.93:5000';
+  String? _base64Image;
+  String? _previousBase64Image;
+  bool _isLoading = true;
+  String _errorMessage = '';
+  Timer? _frameTimer;
 
   @override
   void initState() {
     super.initState();
-    // URL video dari YouTube
-    final videoId1 = YoutubePlayer.convertUrlToId(
-        "https://youtu.be/N1jiCKMMgeA?feature=shared");
-
-    // Inisialisasi controller dengan video ID
-    _controller1 = YoutubePlayerController(
-      initialVideoId: videoId1!,
-      flags: YoutubePlayerFlags(
-        autoPlay: false,
-        mute: false,
-      ),
-    );
+    _startFrameFetching();
   }
 
   @override
   void dispose() {
-    _controller1.dispose();
+    _frameTimer?.cancel();
     super.dispose();
+  }
+
+  void _startFrameFetching() {
+    _fetchLatestFrame();
+    _frameTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      _fetchLatestFrame();
+    });
+  }
+
+  bool _isValidUrl(String url) {
+    final Uri? uri = Uri.tryParse(url);
+    return uri != null && uri.hasScheme && uri.hasAuthority;
+  }
+
+  Future<void> _fetchLatestFrame() async {
+    try {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final response = await http.get(
+        Uri.parse('$_baseUrl/latest_frame?timestamp=$timestamp'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      ).timeout(Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final String newBase64Image = data['image'];
+
+        if (newBase64Image != _previousBase64Image) {
+          setState(() {
+            _base64Image = newBase64Image;
+            _previousBase64Image = newBase64Image;
+            _isLoading = false;
+            _errorMessage = '';
+          });
+        }
+      } else {
+        _handleError('Server error: ${response.statusCode}');
+      }
+    } catch (e) {
+      _handleError('Connection error: $e');
+    }
+  }
+
+  void _handleError(String message) {
+    setState(() {
+      _isLoading = false;
+      _errorMessage = message;
+      _base64Image = null;
+    });
+    print(message);
+  }
+
+  Future<void> _updateBaseUrl(BuildContext context) async {
+    final TextEditingController urlController = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Atur Ulang Base URL'),
+          content: TextField(
+            controller: urlController,
+            decoration: InputDecoration(
+              hintText: 'Masukkan URL baru',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () {
+                final String newUrl = urlController.text.trim();
+                if (_isValidUrl(newUrl)) {
+                  setState(() {
+                    _baseUrl = newUrl;
+                    _isLoading = true;
+                  });
+                  _startFrameFetching();
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('URL tidak valid, silakan coba lagi.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              child: Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildImageView() {
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage.isNotEmpty) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            _errorMessage,
+            style: TextStyle(color: Colors.red),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _isLoading = true;
+              });
+              _startFrameFetching();
+            },
+            child: Text('Refresh'),
+          ),
+        ],
+      );
+    }
+
+    if (_base64Image == null) {
+      return Text('No image available');
+    }
+
+    return Image.memory(
+      base64Decode(_base64Image!),
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: 300,
+      errorBuilder: (context, error, stackTrace) {
+        return Text('Failed to load image');
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          "Monitor",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Teks Deskripsi
-            Text(
-              "Anda dapat memonitor kamera secara real-time",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF6B7280),
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Card untuk Video
-            Card(
-              elevation: 5,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Container(
-                width: double.infinity,
-                height: 200,
-                child: YoutubePlayer(
-                  controller: _controller1,
-                  showVideoProgressIndicator: true,
-                  progressIndicatorColor: Color(0xFF62CDFA),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Tombol Kamera
-            // CustomButton(
-            //   icon: Icons.camera_alt,
-            //   text: "Kamera",
-            //   isActive: true,
-            // ),
-            // const SizedBox(height: 10),
-            // // Tombol Lampu
-            // CustomButton(
-            //   icon: Icons.lightbulb,
-            //   text: "Lampu",
-            //   isActive: true,
-            // ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Widget CustomButton untuk Kamera dan Lampu
-class CustomButton extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final bool isActive;
-
-  const CustomButton({
-    required this.icon,
-    required this.text,
-    required this.isActive,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: Color(0xFF0B7FB5),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              const SizedBox(width: 10),
-              Icon(
-                icon,
-                color: Colors.white,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                text,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: Icon(
-              isActive ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: Colors.white,
-            ),
+        title: Text('Monitor', style: TextStyle(fontWeight: FontWeight.bold)),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () => _updateBaseUrl(context),
           ),
         ],
+        centerTitle: true,
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          setState(() {
+            _isLoading = true;
+          });
+          _startFrameFetching();
+        },
+        child: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Anda dapat memonitor kamera melalui layar ini dengan mudah dan secara real-time',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 20),
+                  Card(
+                    elevation: 5,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      height: 300,
+                      child: _buildImageView(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

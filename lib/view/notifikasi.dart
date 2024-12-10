@@ -32,7 +32,7 @@ class NotifikasiScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Notifikasi Terbaru",
+                "Terbaru",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

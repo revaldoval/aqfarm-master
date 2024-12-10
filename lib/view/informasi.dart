@@ -26,6 +26,7 @@ class _InformasiScreenState extends State<InformasiScreen> {
   int? _fishQuantity; // Variabel untuk menyimpan persentase
   final int targetAge = 90;
   late StreamSubscription _subscription;
+  int usiaIkan = 0;
 
   @override
   void initState() {
@@ -33,6 +34,31 @@ class _InformasiScreenState extends State<InformasiScreen> {
     _startAgeTimer();
     _listenToFishStartDate();
     fetchFishQuantity();
+
+    _subscription = FirebaseDatabase.instance
+        .ref('informasiLele/usiaIkan')
+        .onValue
+        .listen((event) {
+      final data = event.snapshot.value;
+      if (data != null) {
+        final newValue = int.tryParse(data.toString()) ?? 0;
+        if (newValue != usiaIkan) {
+          setState(() {
+            usiaIkan = newValue;
+          });
+        }
+      }
+    });
+  }
+
+  // Method untuk menghitung persentase usia ikan
+  int calculatePercentage(int usiaIkan) {
+    double percentage = (usiaIkan >= 90) ? 100.0 : (usiaIkan / 90.0) * 100;
+    return percentage.round(); // Mengembalikan nilai integer dengan pembulatan
+  }
+
+  int UsiaIkanDalamHari(int usiaIkan) {
+    return usiaIkan; // Mengembalikan nilai usia ikan tanpa perhitungan
   }
 
   void _startAgeTimer() {
@@ -51,15 +77,23 @@ class _InformasiScreenState extends State<InformasiScreen> {
         .onValue
         .listen((event) async {
       if (event.snapshot.exists) {
-        // Parse tanggalMulai dan hitung usia ikan
-        DateTime startDate = DateTime.parse(event.snapshot.value as String);
-        _fishAge = DateTime.now().difference(startDate).inDays;
+        // Pastikan nilai yang diterima adalah String
+        String startDateString = event.snapshot.value.toString();
 
-        // Simpan usia ikan ke Firebase
-        await _updateFishAgeInDatabase();
+        try {
+          // Parse tanggalMulai dan hitung usia ikan
+          DateTime startDate = DateTime.parse(startDateString);
+          _fishAge = DateTime.now().difference(startDate).inDays;
 
-        // Perbarui UI
-        setState(() {});
+          // Simpan usia ikan ke Firebase
+          await _updateFishAgeInDatabase();
+
+          // Perbarui UI
+          setState(() {});
+        } catch (e) {
+          // Jika terjadi kesalahan dalam parsing, tangani sesuai kebutuhan
+          print("Error parsing start date: $e");
+        }
       }
     });
   }
@@ -145,7 +179,7 @@ class _InformasiScreenState extends State<InformasiScreen> {
       await _database.child('makanPagi/beratMakan').set(0);
       await _database.child('makanSore/beratMakan').set(0);
       await _database.child('makanMalam/beratMakan').set(0);
-      _listenToFishStartDate();
+      // _listenToFishStartDate();
       // Show success dialog for harvesting
       showDialog(
         context: context,
@@ -258,6 +292,11 @@ class _InformasiScreenState extends State<InformasiScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final getusia = UsiaIkanDalamHari(usiaIkan);
+    final percentage =
+        calculatePercentage(usiaIkan); // Pastikan ini menghasilkan angka
+    final usiaikanpersen = "$percentage%";
+    final usiaikanhari = "$getusia";
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -288,7 +327,7 @@ class _InformasiScreenState extends State<InformasiScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "$_fishAge Hari", // Display dynamic minutes
+                            usiaikanhari + " Hari", // Display dynamic minutes
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 30.0,
@@ -303,7 +342,8 @@ class _InformasiScreenState extends State<InformasiScreen> {
                             ),
                           ),
                           Text(
-                            "${getPercentage()}% dari target tercapai", // Menampilkan persentase tanpa desimal // Menampilkan persentase
+                            usiaikanpersen +
+                                " dari target tercapai", // Menampilkan persentase tanpa desimal // Menampilkan persentase
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 12.0,
@@ -316,7 +356,6 @@ class _InformasiScreenState extends State<InformasiScreen> {
                         children: [
                           CircularProgressText(
                             onHarvest: () {
-                              
                               PanenLele();
                               // Memanggil PanenLele() ketika tombol Panen ditekan
                               print('Memanen lele...');
@@ -374,7 +413,7 @@ class _InformasiScreenState extends State<InformasiScreen> {
                                   'Loading...', // Teks saat data sedang dimuat
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 30.0,
+                                    fontSize: 25.0,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 )
@@ -382,7 +421,7 @@ class _InformasiScreenState extends State<InformasiScreen> {
                                   '$_fishQuantity Bibit Lele', // Display dynamic quantity
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 30.0,
+                                    fontSize: 25.0,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),

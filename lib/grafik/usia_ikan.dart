@@ -76,8 +76,8 @@ class _CircularProgressTextState extends State<CircularProgressText> {
       alignment: Alignment.center,
       children: [
         SizedBox(
-          width: 150,
-          height: 150,
+          width: 125,
+          height: 125,
           child: CircularProgressIndicator(
             value: progress,
             strokeWidth: 12, // Menyesuaikan ketebalan
